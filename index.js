@@ -1,28 +1,10 @@
 var phantom = require('phantom');
 var Promise = require('bluebird');
 var deasync = require('deasync');
-
 var Page = require('./page');
-// phantom.create(function(ph) {
-//     ph.createPage(function(page) {
-//         page.open("http://www.google.com", function(status) {
-//             console.log("opened google? ", status);
-//             console.log(page.injectJs);
-//             console.log(page.evaluateJavaScript);
-//             page.get('cookies', function(data) {
-//                 console.log('data', data);
-//             })
-//             page.evaluate(function() {
-//                 return document.title;
-//             }, function(result) {
-//                 console.log('Page title is ' + result);
-//                 ph.exit();
-//             });
-//         });
-//     });
-// });
 
 function Wrathjs() {
+    // TODO: --load-images=no and other args
     this._ph = this._initPhantom();
 };
 module.exports = Wrathjs;
@@ -40,11 +22,13 @@ Wrathjs.prototype._initPhantom = function() {
     return ph;
 };
 
-Wrathjs.prototype.createPage = function(url) {
+Wrathjs.prototype.create = function() {
+    // TODO: options to load jquery in page
+    // TODO: also look for lightweight alternatives
     var page = null;
 
     this._ph.createPage(function (pageInCb) {
-        page = new Page(pageInCb, url);
+        page = new Page(pageInCb);
     });
 
     while (page === null) {
