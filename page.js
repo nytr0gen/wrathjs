@@ -72,6 +72,7 @@ Page.prototype.click = function(selector) {
     this._waitingPush(promise);
 };
 
+//TODO: why doesn't it work
 Page.prototype.blur = function(selector) {
     return this.evaluate(function(selector) {
         $(selector).blur();
