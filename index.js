@@ -1,4 +1,4 @@
-var phantom = require('phantom');
+var phantom = require('node-phantom-simple');
 var Promise = require('bluebird');
 var deasync = require('deasync');
 var Page = require('./page');
@@ -11,8 +11,13 @@ module.exports = Wrathjs;
 
 Wrathjs.prototype._initPhantom = function() {
     var ph = null;
-    phantom.create(function (phInCb) {
-        ph = phInCb;
+    phantom.create(function (err, phInCb) {
+        if (err) {
+            console.error(err);
+            process.exit();
+        } else {
+            ph = phInCb;
+        }
     });
 
     while (ph === null) {
@@ -27,8 +32,13 @@ Wrathjs.prototype.create = function() {
     // TODO: also look for lightweight alternatives
     var page = null;
 
-    this._ph.createPage(function (pageInCb) {
-        page = new Page(pageInCb);
+    this._ph.createPage(function (err, pageInCb) {
+        if (err) {
+            console.error(err);
+            process.exit();
+        } else {
+            page = new Page(pageInCb);
+        }
     });
 
     while (page === null) {
