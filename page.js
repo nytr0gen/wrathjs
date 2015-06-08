@@ -10,23 +10,19 @@ function Page(phPage, url) {
 
     phPage.evaluateAsync = null;
     this._page = Promise.promisifyAll(phPage);
-    this._waiting = [];
-    this._loadingPage = false;
-    this._waitLock = null;
 
     this._page.onLoadStarted = function() {
-        console.log('does this work?');
+        console.log('Triggered load started');
         this._loadingPage = true;
     }.bind(this);
-    this._waitLock = null;
 
     this._page.onUrlChanged = function() {
-        console.log('does this work urlChange?');
+        console.log('Triggered url change');
         this._loadingPage = true;
     }.bind(this);
 
     this._page.onLoadFinished = function(status) {
-        console.log('yes');
+        console.log('Triggered load finished');
         this._loadingPage = false;
     }.bind(this);
 };
@@ -37,11 +33,11 @@ Page.prototype._injectJquery = function () {
 };
 
 Page.prototype.open = function (url) {
-    console.log(1);
     return this._page.openAsync(url).bind(this)
     .then(function(status) {
-        console.log(2);
-        return this._injectJquery().then(function() {console.log(3);return status;});
+        return this._injectJquery().then(function() {
+            return status;
+        });
     });
 };
 Page.prototype.get = function(name) {
@@ -49,12 +45,22 @@ Page.prototype.get = function(name) {
 };
 
 Page.prototype.set = function(name, value) {
-    return this._page.setAsync(name, value).bind(this);
+    if (name.indexOf('.') == -1) {
+        return this._page.setAsync(name, value).bind(this);
+    } else {
+        var arrName = name.split('.')[0];
+        name = name.split('.')[1];
+
+        return this.get(arrName).then(function (arr) {
+            arr[name] = value;
+
+            return this._page.setAsync(arrName, arr);
+        })
+    }
 };
 
 Page.prototype.evaluate = function (fn) {
     var extraArgs = [].slice.call(arguments, 1);
-    console.log(extraArgs);
     return new Promise(function(resolve, reject) {
         var cb = function(err, result) {
             if (err) reject(err);
@@ -63,9 +69,7 @@ Page.prototype.evaluate = function (fn) {
         var args = [fn, cb].concat(extraArgs);
 
         this._page.evaluate.apply(this._page, args);
-    }.bind(this)).bind(this).then(function(result) {
-        return result;
-    });
+    }.bind(this)).bind(this);
 };
 
 Page.prototype._getOffset = function(selector) {
@@ -74,20 +78,11 @@ Page.prototype._getOffset = function(selector) {
     }, selector);
 };
 
-
-Page.prototype._waitingPush = function (promiseFn) {
-    this._waiting.push(promiseFn);
-};
-
-Page.prototype._waitingClear = function () {
-    this._waiting.length = 0;
-};
-
 Page.prototype.click = function(selector) {
     // TODO: arguments for hardcoded +3
     var promiseFn = function() {
         return this._getOffset(selector).then(function(offset) {
-            console.log(offset);
+            // console.log(offset);
             if (offset) {
                 this._page.sendEvent('click', offset.left + 3, offset.top + 3);
             } else {
@@ -123,13 +118,13 @@ Page.prototype.type = function(selector, text, delay, pressTab) {
     pressTab = pressTab || true;
     var promiseFn = function() {
         return this.focus(selector).then(function() {
-            console.log('startKeyPress');
+            // console.log('startKeyPress');
             // this._page.sendEvent('keypress', text);
             for (var i = 0; i < text.length; i++) {
                 this._page.sendEvent('keypress', text[i]);
                 deasync.sleep(delay);
             }
-            console.log('endType');
+            // console.log('endType');
 
             // if (pressTab) {
             //     this._page.sendEvent('keypress', this.keys.Tab);
@@ -144,7 +139,13 @@ Page.prototype.render = function(file) {
     return this._page.renderAsync(file).bind(this);
 };
 
-Page.prototype.waitClick = function() {
+Page.prototype._loadingPage = false;
+Page.prototype.waitClick = function(selector) {
+    if (selector) {
+        this.click(selector);
+    }
+
+    this._loadingPage = true;
     return this.wait().then(function(results) {
         this._waitingClear();
         while (this._loadingPage) {
@@ -152,19 +153,30 @@ Page.prototype.waitClick = function() {
         }
 
         return this._injectJquery().then(function() {
-            console.log('injected jquery');
+            console.log('Injected jquery');
             return results;
         });
     });
 }
 
+Page.prototype._waiting = [];
+Page.prototype._waitLock = null;
+
+Page.prototype._waitingPush = function (promiseFn) {
+    this._waiting.push(promiseFn);
+};
+
+Page.prototype._waitingClear = function () {
+    this._waiting.length = 0;
+};
+
 Page.prototype.wait = function() {
     if (this._waitLock !== null) {
-        console.log('hit waitLock');
+        console.log('Hit waitLock');
         return this._waitLock;
     }
 
-    console.log('triggering each job');
+    console.log('Triggering each job');
     this._waitLock = Promise.resolve(this._waiting).bind(this)
         .each(function(promiseFn) {
             return promiseFn();

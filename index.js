@@ -3,14 +3,18 @@ var Promise = require('bluebird');
 var deasync = require('deasync');
 var Page = require('./page');
 
-function Wrathjs() {
+function Wrathjs(params, phPath) {
     // TODO: --load-images=no and other args
-    this._ph = this._initPhantom();
+    this._ph = this._initPhantom(params, phPath);
 };
 module.exports = Wrathjs;
 
-Wrathjs.prototype._initPhantom = function() {
+Wrathjs.prototype._initPhantom = function(parameters, phPath) {
     var ph = null;
+    var opts = {
+        parameters: parameters || {},
+        phPath: phPath || 'phantomjs'
+    };
     phantom.create(function (err, phInCb) {
         if (err) {
             console.error(err);
@@ -18,7 +22,7 @@ Wrathjs.prototype._initPhantom = function() {
         } else {
             ph = phInCb;
         }
-    });
+    }, opts);
 
     while (ph === null) {
         deasync.runLoopOnce();
