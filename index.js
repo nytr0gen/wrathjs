@@ -31,25 +31,25 @@ Wrathjs.prototype._initPhantom = function(parameters, phPath) {
     return ph;
 };
 
-Wrathjs.prototype.create = function() {
+Wrathjs.prototype.create = function(opts) {
     // TODO: options to load jquery in page
     // TODO: also look for lightweight alternatives
-    var page = null;
+    var phPage = null;
 
     this._ph.createPage(function (err, pageInCb) {
         if (err) {
             console.error(err);
             process.exit();
         } else {
-            page = new Page(pageInCb);
+            phPage = pageInCb;
         }
     });
 
-    while (page === null) {
+    while (phPage === null) {
         deasync.runLoopOnce();
     }
 
-    return page;
+    return new Page(phPage, opts);
 };
 
 Wrathjs.prototype.exit = function() {

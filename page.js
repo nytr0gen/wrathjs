@@ -1,3 +1,5 @@
+'use strict';
+
 var path = require('path');
 var Promise = require('bluebird');
 var deasync = require('deasync');
@@ -5,9 +7,7 @@ var eventKeys = require('./utils/eventKeys');
 
 const JQUERY_PATH = path.join(__dirname, './utils/jquery.js');
 
-function Page(phPage, url) {
-    this.keys = eventKeys;
-
+function Page(phPage, opts) {
     phPage.evaluateAsync = null;
     this._page = Promise.promisifyAll(phPage);
 
@@ -25,8 +25,29 @@ function Page(phPage, url) {
         console.log('Triggered load finished');
         this._loadingPage = false;
     }.bind(this);
+
+    this._opts = opts || {};
+    this._opts.viewportSize = opts.viewportSize || {
+        width: 800,
+        height: 600
+    };
+
+    var settingsOptsDone = false;
+    this.set(this._opts).then(function() {
+        settingsOptsDone = true;
+    }, function (err) {
+        settingsOptsDone = true;
+        console.error(err);
+        process.exit();
+    });
+
+    while (!settingsOptsDone) {
+        deasync.runLoopOnce();
+    }
 };
 module.exports = Page;
+
+Page.prototype.keys = eventKeys;
 
 Page.prototype._injectJquery = function () {
     return this._page.injectJsAsync(JQUERY_PATH).bind(this);
@@ -45,28 +66,39 @@ Page.prototype.get = function(name) {
 };
 
 Page.prototype.set = function(name, value) {
-    if (name.indexOf('.') == -1) {
-        return this._page.setAsync(name, value).bind(this);
+    if (typeof(name) == 'string') {
+        if (name.indexOf('.') == -1) {
+            return this._page.setAsync(name, value).bind(this);
+        } else {
+            var arrName = name.split('.')[0];
+            name = name.split('.')[1];
+
+            return this.get(arrName).then(function (arr) {
+                arr[name] = value;
+
+                return this.set(arrName, arr);
+            });
+        }
+    } else if (typeof(name) == 'object') {
+        var opts = name;
+
+        return Promise.resolve(Object.keys(opts))
+        .bind(this).each(function(name) {
+            return this.set(name, opts[name]);
+        });
     } else {
-        var arrName = name.split('.')[0];
-        name = name.split('.')[1];
-
-        return this.get(arrName).then(function (arr) {
-            arr[name] = value;
-
-            return this._page.setAsync(arrName, arr);
-        })
+        return Promise.reject();
     }
 };
 
 Page.prototype.evaluate = function (fn) {
     var extraArgs = [].slice.call(arguments, 1);
+    var args = [fn, ''].concat(extraArgs);
     return new Promise(function(resolve, reject) {
-        var cb = function(err, result) {
+        args[1] = function(err, result) {
             if (err) reject(err);
             else resolve(result);
         };
-        var args = [fn, cb].concat(extraArgs);
 
         this._page.evaluate.apply(this._page, args);
     }.bind(this)).bind(this);
@@ -74,7 +106,7 @@ Page.prototype.evaluate = function (fn) {
 
 Page.prototype._getOffset = function(selector) {
     return this.evaluate(function(selector) {
-        return $(selector).offset();
+        return $(selector)[0].getBoundingClientRect();
     }, selector);
 };
 
@@ -135,8 +167,22 @@ Page.prototype.type = function(selector, text, delay, pressTab) {
     this._waitingPush(promiseFn);
 };
 
-Page.prototype.render = function(file) {
-    return this._page.renderAsync(file).bind(this);
+Page.prototype.render = function(file, selector) {
+    if (selector) {
+        return this._getOffset(selector).then(function(offset) {
+            return this.set('clipRect', offset);
+        }).then(function() {
+            return this.render(file);
+        }).then(function() {
+            return this.set('clipRect', {
+                width: this._opts.viewportSize.width,
+                height: this._opts.viewportSize.height,
+                top: 0, left: 0
+            });
+        })
+    } else {
+        return this._page.renderAsync(file).bind(this);
+    }
 };
 
 Page.prototype._loadingPage = false;
