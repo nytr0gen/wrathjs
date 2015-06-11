@@ -13,7 +13,7 @@ Wrathjs.prototype._initPhantom = function(parameters, phPath) {
     var ph = null;
     var opts = {
         parameters: parameters || {},
-        phPath: phPath || 'phantomjs'
+        phantomPath: phPath || 'phantomjs'
     };
     phantom.create(function (err, phInCb) {
         if (err) {

@@ -27,7 +27,7 @@ function Page(phPage, opts) {
     }.bind(this);
 
     this._opts = opts || {};
-    this._opts.viewportSize = opts.viewportSize || {
+    this._opts.viewportSize = this._opts.viewportSize || {
         width: 800,
         height: 600
     };
