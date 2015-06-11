@@ -31,7 +31,7 @@ function Page(phPage, opts) {
         width: 800,
         height: 600
     };
-
+    
     var settingsOptsDone = false;
     this.set(this._opts).then(function() {
         settingsOptsDone = true;
@@ -41,9 +41,10 @@ function Page(phPage, opts) {
         process.exit();
     });
 
-    while (!settingsOptsDone) {
-        deasync.runLoopOnce();
-    }
+    // while (!settingsOptsDone) {
+    //     // console.log(33);
+    //     deasync.runLoopOnce();
+    // }
 };
 module.exports = Page;
 
@@ -82,13 +83,12 @@ Page.prototype.set = function(name, value) {
     } else if (typeof(name) == 'object') {
         var opts = name;
 
-        return Promise.resolve(Object.keys(opts))
-        .bind(this).each(function(name) {
+        return Promise.resolve(Object.keys(opts)).bind(this).each(function(name) {
             return this.set(name, opts[name]);
         });
-    } else {
-        return Promise.reject();
     }
+
+    return Promise.resolve();
 };
 
 Page.prototype.evaluate = function (fn) {
@@ -150,6 +150,7 @@ Page.prototype.type = function(selector, text, delay, pressTab) {
     pressTab = pressTab || true;
     var promiseFn = function() {
         return this.focus(selector).then(function() {
+            text = String(text);
             // console.log('startKeyPress');
             // this._page.sendEvent('keypress', text);
             for (var i = 0; i < text.length; i++) {
