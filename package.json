@@ -1,6 +1,6 @@
 {
   "name": "wrathjs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "PhantomJS wrapper made right - Closer to Alpha Stage",
   "main": "index.js",
   "scripts": {

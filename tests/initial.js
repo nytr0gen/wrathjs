@@ -21,6 +21,9 @@ page.open('http://www.google.com').then(function () {
 }).then(function(result) {
     console.log('Page title2 is', result);
 
+    // Testing if it times out
+    return this.waitClick('.input-query');
+}).then(function(result) {
     wrath.exit();
 }).catch(function(err) {
     console.log(err.stack);

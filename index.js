@@ -1,4 +1,4 @@
-var phantom = require('node-phantom-simple');
+var phantom = require('./util/node-phantom-simple');
 var Promise = require('bluebird');
 var deasync = require('deasync');
 var Page = require('./page');

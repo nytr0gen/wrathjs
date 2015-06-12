@@ -3,26 +3,26 @@
 var path = require('path');
 var Promise = require('bluebird');
 var deasync = require('deasync');
-var eventKeys = require('./utils/eventKeys');
-
-const JQUERY_PATH = path.join(__dirname, './utils/jquery.js');
+var util = require('./util');
+const EVENT_KEYS = require('./util/eventKeys');
+const JQUERY_PATH = path.join(__dirname, './util/jquery.js');
 
 function Page(phPage, opts) {
     phPage.evaluateAsync = null;
     this._page = Promise.promisifyAll(phPage);
 
     this._page.onLoadStarted = function() {
-        console.log('Triggered load started');
+        util.debug('Triggered load started');
         this._loadingPage = true;
     }.bind(this);
 
     this._page.onUrlChanged = function() {
-        console.log('Triggered url change');
+        util.debug('Triggered url change');
         this._loadingPage = true;
     }.bind(this);
 
     this._page.onLoadFinished = function(status) {
-        console.log('Triggered load finished');
+        util.debug('Triggered load finished');
         this._loadingPage = false;
     }.bind(this);
 
@@ -32,6 +32,7 @@ function Page(phPage, opts) {
         height: 600
     };
     
+    // TODO: fix this
     var settingsOptsDone = false;
     this.set(this._opts).then(function() {
         settingsOptsDone = true;
@@ -42,13 +43,13 @@ function Page(phPage, opts) {
     });
 
     // while (!settingsOptsDone) {
-    //     // console.log(33);
+    //     // util.debug(33);
     //     deasync.runLoopOnce();
     // }
 };
 module.exports = Page;
 
-Page.prototype.keys = eventKeys;
+Page.prototype.EVENT_KEYS = EVENT_KEYS;
 
 Page.prototype._injectJquery = function () {
     return this._page.injectJsAsync(JQUERY_PATH).bind(this);
@@ -114,9 +115,9 @@ Page.prototype.click = function(selector) {
     // TODO: arguments for hardcoded +3
     var promiseFn = function() {
         return this._getOffset(selector).then(function(offset) {
-            // console.log(offset);
+            util.debug(offset);
             if (offset) {
-                this._page.sendEvent('click', offset.left + 3, offset.top + 3);
+                return this._page.sendEvent('click', offset.left + 6, offset.top + 3);
             } else {
                 console.error('Selector ' + selector + ' not found');
             }
@@ -143,25 +144,16 @@ Page.prototype.focus = function(selector) {
 
 /**
 * delay - delay between writing letters {default: 80}
-* pressTab - pressTab tab after writing {default: true}
 */
-Page.prototype.type = function(selector, text, delay, pressTab) {
+Page.prototype.type = function(selector, text, delay) {
     delay = delay || 80;
-    pressTab = pressTab || true;
     var promiseFn = function() {
         return this.focus(selector).then(function() {
             text = String(text);
-            // console.log('startKeyPress');
-            // this._page.sendEvent('keypress', text);
             for (var i = 0; i < text.length; i++) {
                 this._page.sendEvent('keypress', text[i]);
                 deasync.sleep(delay);
             }
-            // console.log('endType');
-
-            // if (pressTab) {
-            //     this._page.sendEvent('keypress', this.keys.Tab);
-            // }
         });
     }.bind(this);
 
@@ -195,12 +187,25 @@ Page.prototype.waitClick = function(selector) {
     this._loadingPage = true;
     return this.wait().then(function(results) {
         this._waitingClear();
-        while (this._loadingPage) {
+
+        let timedout;
+        setTimeout(function() {
+            if (this._loadingPage) {
+                timedout = true;
+            }
+        }.bind(this), 12 * 1000);
+        // TODO: timeout limit in constructor
+
+        while (this._loadingPage && !timedout) {
             deasync.sleep(50);
         }
 
+        if (timedout) {
+            throw new Error('Timedout on ' + selector);
+        }
+
         return this._injectJquery().then(function() {
-            console.log('Injected jquery');
+            util.debug('Injected jQuery');
             return results;
         });
     });
@@ -219,11 +224,11 @@ Page.prototype._waitingClear = function () {
 
 Page.prototype.wait = function() {
     if (this._waitLock !== null) {
-        console.log('Hit waitLock');
+        util.debug('Hit waitLock');
         return this._waitLock;
     }
 
-    console.log('Triggering each job');
+    util.debug('Triggering each job');
     this._waitLock = Promise.resolve(this._waiting).bind(this)
         .each(function(promiseFn) {
             return promiseFn();
