@@ -107,7 +107,8 @@ Page.prototype.evaluate = function (fn) {
 
 Page.prototype._getOffset = function(selector) {
     return this.evaluate(function(selector) {
-        return $(selector)[0].getBoundingClientRect();
+        return !!$(selector).length && 
+            $(selector)[0].getBoundingClientRect();
     }, selector);
 };
 
@@ -119,7 +120,7 @@ Page.prototype.click = function(selector) {
             if (offset) {
                 return this._page.sendEvent('click', offset.left + 6, offset.top + 3);
             } else {
-                console.error('Selector ' + selector + ' not found');
+                throw new Error('Selector ' + selector + ' not found on click');
             }
         });
     }.bind(this);
@@ -128,17 +129,23 @@ Page.prototype.click = function(selector) {
 };
 
 //TODO: why doesn't it work
-Page.prototype.blur = function(selector) {
-    return this.evaluate(function(selector) {
-        $(selector).blur();
-    }, selector);
-};
+// Page.prototype.blur = function(selector) {
+//     return this.evaluate(function(selector) {
+//         $(selector).blur();
+//     }, selector);
+// };
 
 Page.prototype.focus = function(selector) {
     return this.evaluate(function(selector) {
-        $(selector).focus();
+        return $(selector).length && 
+            $(selector).focus();
     }, selector).then(function(result) {
-        return result;
+        util.debug(result);
+        if (result) {
+            return result;
+        } else {
+            throw new Error('Selector ' + selector + ' not found on focus');
+        }
     });
 };
 
@@ -163,7 +170,11 @@ Page.prototype.type = function(selector, text, delay) {
 Page.prototype.render = function(file, selector) {
     if (selector) {
         return this._getOffset(selector).then(function(offset) {
-            return this.set('clipRect', offset);
+            if (offset) {
+                return this.set('clipRect', offset);
+            } else {
+                throw new Error('Couldn\'t find ' + selector + ' on render');
+            }
         }).then(function() {
             return this.render(file);
         }).then(function() {

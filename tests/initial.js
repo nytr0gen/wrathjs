@@ -4,7 +4,7 @@ var wrath = new Wrathjs();
 page = wrath.create();
 
 page.open('http://www.google.com').then(function () {
-    this.type('#lst-ib', 'valoare');
+    this.type('[name=q]', 'valoare');
     this.click('[name=btnI]');
 
     return this.waitClick();
@@ -20,7 +20,7 @@ page.open('http://www.google.com').then(function () {
     });
 }).then(function(result) {
     console.log('Page title2 is', result);
-
+    
     // Testing if it times out
     return this.waitClick('.input-query');
 }).then(function(result) {
