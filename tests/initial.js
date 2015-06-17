@@ -24,7 +24,17 @@ page.open('http://www.google.com').then(function () {
     // Testing if it times out
     return this.waitClick('.input-query');
 }).then(function(result) {
-    wrath.exit();
+
 }).catch(function(err) {
+    wrath.exit();
     console.log(err.stack);
-})
+    return this.get('content').then(function(result) {
+        // console.log(result);
+        console.log('this.get(content) in catch of length ', result.length);
+    }).finally(function() {
+        console.log(3421423);
+    })
+}).finally(function() {
+    console.log('exit');
+    wrath.exit();
+});

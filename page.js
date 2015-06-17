@@ -31,7 +31,7 @@ function Page(phPage, opts) {
         width: 800,
         height: 600
     };
-    
+
     // TODO: fix this
     var settingsOptsDone = false;
     this.set(this._opts).then(function() {
@@ -107,7 +107,7 @@ Page.prototype.evaluate = function (fn) {
 
 Page.prototype._getOffset = function(selector) {
     return this.evaluate(function(selector) {
-        return !!$(selector).length && 
+        return !!$(selector).length &&
             $(selector)[0].getBoundingClientRect();
     }, selector);
 };
@@ -115,10 +115,25 @@ Page.prototype._getOffset = function(selector) {
 Page.prototype.click = function(selector) {
     // TODO: arguments for hardcoded +3
     var promiseFn = function() {
-        return this._getOffset(selector).then(function(offset) {
-            util.debug(offset);
-            if (offset) {
-                return this._page.sendEvent('click', offset.left + 6, offset.top + 3);
+        // return this._getOffset(selector).then(function(offset) {
+        //     util.debug(offset);
+        //     if (offset) {
+        //         return this._page.sendEvent('click', offset.left + 6, offset.top + 3);
+        //     } else {
+        //         throw new Error('Selector ' + selector + ' not found on click');
+        //     }
+        // });
+        return this.evaluate(function(selector) {
+            var evt = document.createEvent('MouseEvents');
+            evt.initMouseEvent('click', true, true, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+            return !!$(selector).length &&
+                !!$(selector)[0].dispatchEvent(evt);
+        }, selector).then(function(result) {
+            util.debug(result);
+            if (result) {
+                return result;
             } else {
                 throw new Error('Selector ' + selector + ' not found on click');
             }
@@ -137,8 +152,8 @@ Page.prototype.click = function(selector) {
 
 Page.prototype.focus = function(selector) {
     return this.evaluate(function(selector) {
-        return $(selector).length && 
-            $(selector).focus();
+        return !!$(selector).length &&
+            !!$(selector).focus();
     }, selector).then(function(result) {
         util.debug(result);
         if (result) {
