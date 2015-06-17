@@ -113,31 +113,31 @@ Page.prototype._getOffset = function(selector) {
 };
 
 Page.prototype.click = function(selector) {
-    // TODO: arguments for hardcoded +3
+    // TODO: arguments for hardcoded +4
     var promiseFn = function() {
-        // return this._getOffset(selector).then(function(offset) {
-        //     util.debug(offset);
-        //     if (offset) {
-        //         return this._page.sendEvent('click', offset.left + 6, offset.top + 3);
-        //     } else {
-        //         throw new Error('Selector ' + selector + ' not found on click');
-        //     }
-        // });
-        return this.evaluate(function(selector) {
-            var evt = document.createEvent('MouseEvents');
-            evt.initMouseEvent('click', true, true, window,
-                0, 0, 0, 0, 0, false, false, false, false, 0, null);
-
-            return !!$(selector).length &&
-                !!$(selector)[0].dispatchEvent(evt);
-        }, selector).then(function(result) {
-            util.debug(result);
-            if (result) {
-                return result;
+        return this._getOffset(selector).then(function(offset) {
+            util.debug(offset);
+            if (offset) {
+                return this._page.sendEvent('click', offset.left + 4, offset.top + 2);
             } else {
                 throw new Error('Selector ' + selector + ' not found on click');
             }
         });
+        // return this.evaluate(function(selector) {
+        //     var evt = document.createEvent('MouseEvents');
+        //     evt.initMouseEvent('click', true, true, window,
+        //         0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+        //     return !!$(selector).length &&
+        //         !!$(selector)[0].dispatchEvent(evt);
+        // }, selector).then(function(result) {
+        //     util.debug(result);
+        //     if (result) {
+        //         return result;
+        //     } else {
+        //         throw new Error('Selector ' + selector + ' not found on click');
+        //     }
+        // });
     }.bind(this);
 
     this._waitingPush(promiseFn);
@@ -219,7 +219,7 @@ Page.prototype.waitClick = function(selector) {
             if (this._loadingPage) {
                 timedout = true;
             }
-        }.bind(this), 12 * 1000);
+        }.bind(this), 16000);
         // TODO: timeout limit in constructor
 
         while (this._loadingPage && !timedout) {
