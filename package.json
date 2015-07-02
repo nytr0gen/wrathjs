@@ -1,11 +1,16 @@
 {
   "name": "wrathjs",
-  "version": "0.0.8",
-  "description": "PhantomJS wrapper made right - Closer to Alpha Stage",
+  "version": "0.0.9",
+  "description": "Simplified PhantomJs for node",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [
+    "request",
+    "phantom",
+    "phantomjs"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/nytr0gen/wrathjs"
