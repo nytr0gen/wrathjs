@@ -1,5 +1,4 @@
 'use strict';
-
 var path = require('path');
 var Promise = require('bluebird');
 var deasync = require('deasync');
@@ -27,6 +26,7 @@ function Page(phPage, opts) {
     }.bind(this);
 
     this._opts = opts || {};
+    this._opts.clickTimeout = this._opts.clickTimeout || 30000;
     this._opts.viewportSize = this._opts.viewportSize || {
         width: 800,
         height: 600
@@ -63,6 +63,7 @@ Page.prototype.open = function (url) {
         });
     });
 };
+
 Page.prototype.get = function(name) {
     return this._page.getAsync(name).bind(this);
 };
@@ -219,8 +220,7 @@ Page.prototype.waitClick = function(selector) {
             if (this._loadingPage) {
                 timedout = true;
             }
-        }.bind(this), 16000);
-        // TODO: timeout limit in constructor
+        }.bind(this), this._opts.clickTimeout);
 
         while (this._loadingPage && !timedout) {
             deasync.sleep(50);

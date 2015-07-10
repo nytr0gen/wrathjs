@@ -1,6 +1,6 @@
 {
   "name": "wrathjs",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Simplified PhantomJs for node",
   "main": "index.js",
   "scripts": {
