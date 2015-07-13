@@ -1,6 +1,6 @@
 {
   "name": "wrathjs",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "description": "Simplified PhantomJs for node",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,6 @@
   "dependencies": {
     "bluebird": "^2.9.27",
     "deasync": "^0.1.0",
-    "node-phantom-simple": "^1.2.0"
+    "node-phantom-simple": "^2.0.1"
   }
 }

@@ -42,6 +42,8 @@ function Page(phPage, opts) {
         process.exit();
     });
 
+    // TODO: fix this
+    deasync.sleep(100);
     // while (!settingsOptsDone) {
     //     // util.debug(33);
     //     deasync.runLoopOnce();
@@ -70,18 +72,7 @@ Page.prototype.get = function(name) {
 
 Page.prototype.set = function(name, value) {
     if (typeof(name) == 'string') {
-        if (name.indexOf('.') == -1) {
-            return this._page.setAsync(name, value).bind(this);
-        } else {
-            var arrName = name.split('.')[0];
-            name = name.split('.')[1];
-
-            return this.get(arrName).then(function (arr) {
-                arr[name] = value;
-
-                return this.set(arrName, arr);
-            });
-        }
+        return this._page.setAsync(name, value).bind(this);
     } else if (typeof(name) == 'object') {
         var opts = name;
 
@@ -94,13 +85,12 @@ Page.prototype.set = function(name, value) {
 };
 
 Page.prototype.evaluate = function (fn) {
-    var extraArgs = [].slice.call(arguments, 1);
-    var args = [fn, ''].concat(extraArgs);
+    var args = [].slice.call(arguments);
     return new Promise(function(resolve, reject) {
-        args[1] = function(err, result) {
+        args.push(function(err, result) {
             if (err) reject(err);
             else resolve(result);
-        };
+        });
 
         this._page.evaluate.apply(this._page, args);
     }.bind(this)).bind(this);
@@ -124,21 +114,6 @@ Page.prototype.click = function(selector) {
                 throw new Error('Selector ' + selector + ' not found on click');
             }
         });
-        // return this.evaluate(function(selector) {
-        //     var evt = document.createEvent('MouseEvents');
-        //     evt.initMouseEvent('click', true, true, window,
-        //         0, 0, 0, 0, 0, false, false, false, false, 0, null);
-
-        //     return !!$(selector).length &&
-        //         !!$(selector)[0].dispatchEvent(evt);
-        // }, selector).then(function(result) {
-        //     util.debug(result);
-        //     if (result) {
-        //         return result;
-        //     } else {
-        //         throw new Error('Selector ' + selector + ' not found on click');
-        //     }
-        // });
     }.bind(this);
 
     this._waitingPush(promiseFn);

@@ -1,7 +1,9 @@
 var Wrathjs = require('../index');
 
 var wrath = new Wrathjs();
-page = wrath.create();
+page = wrath.create({
+    clickTimeout: 2000
+});
 
 page.open('http://www.google.com').then(function () {
     this.type('[name=q]', 'valoare');
@@ -24,16 +26,13 @@ page.open('http://www.google.com').then(function () {
     // Testing if it times out
     return this.waitClick('[type=submit]');
 }).then(function(result) {
-
+    // pass
 }).catch(function(err) {
-    wrath.exit();
     console.log(err.stack);
     return this.get('content').then(function(result) {
         // console.log(result);
-        console.log('this.get(content) in catch of length ', result.length);
-    }).finally(function() {
-        console.log(3421423);
-    })
+        console.log('this.get(content) in catch of length', result.length);
+    });
 }).finally(function() {
     console.log('exit');
     wrath.exit();

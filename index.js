@@ -1,6 +1,6 @@
-var phantom = require('./util/node-phantom-simple');
-var Promise = require('bluebird');
+var phantom = require('node-phantom-simple');
 var deasync = require('deasync');
+var Promise = require('bluebird');
 var Page = require('./page');
 
 function Wrathjs(params, phPath) {
@@ -13,16 +13,16 @@ Wrathjs.prototype._initPhantom = function(parameters, phPath) {
     var ph = null;
     var opts = {
         parameters: parameters || {},
-        phantomPath: phPath || 'phantomjs'
+        path: phPath || 'phantomjs'
     };
-    phantom.create(function (err, phInCb) {
+    phantom.create(opts, function (err, phInCb) {
         if (err) {
             console.error(err);
             process.exit();
         } else {
             ph = phInCb;
         }
-    }, opts);
+    });
 
     while (ph === null) {
         deasync.runLoopOnce();
