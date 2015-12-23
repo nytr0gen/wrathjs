@@ -40,7 +40,7 @@ page.close() -> null
 ## Examples
 You can find more examples in tests folder
 
-```
+```javascript
 var wrath = new Wrathjs();
 page = wrath.create();
 
